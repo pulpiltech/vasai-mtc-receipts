@@ -1,6 +1,6 @@
 ## Next.js App Router Course - Final
 
-Email: user@nextmail.com
+Email: vasaimethodisttamilchurch@gmail.com
 Password: 123456
 
 # vasai-mtc-receipts

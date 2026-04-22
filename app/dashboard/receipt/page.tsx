@@ -303,14 +303,11 @@ const UploadExcel: React.FC = () => {
           <div className="px-8 pt-10 pb-8 bg-white border border-gray-100 relative z-10 m-4 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
 
             {/* Logo */}
-            <div className="mx-auto mb-6 flex items-center justify-center">
-              <Image
+            <div className="mx-auto mb-6 flex justify-center w-full px-4">
+              <img
                 src="/MTC-VASAI-logo.png"
-                alt="MTC-VASAI"
-                width={80}
-                height={80}
-                className="object-contain"
-                priority
+                alt="MTC-VASAI Logo"
+                className="max-h-[120px] w-auto object-contain"
               />
             </div>
 

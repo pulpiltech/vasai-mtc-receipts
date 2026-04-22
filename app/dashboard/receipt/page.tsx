@@ -400,7 +400,7 @@ const UploadExcel: React.FC = () => {
 
             {/* Cheerful giver */}
             <div className="mt-8 text-center relative z-10 pb-2">
-              <div className="text-[15px] italic text-[#4b4eeb] font-medium tracking-wide mb-1">"God loves a cheerful giver."</div>
+              <div className="text-[15px] italic text-[#4b4eeb] font-medium tracking-wide mb-1">&quot;God loves a cheerful giver.&quot;</div>
               <div className="text-[12px] text-slate-500 font-medium">Thank you for your support!</div>
             </div>
 

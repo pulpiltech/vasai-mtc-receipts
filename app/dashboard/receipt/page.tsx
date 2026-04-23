@@ -81,6 +81,8 @@ const UploadExcel: React.FC = () => {
   const [excelData, setExcelData] = useState<any[][] | null>(null);
   const contentRef = useRef(null);
   const [jsonData, setJsonData] = useState<any>([]);
+  const [isSendingWhatsapp, setIsSendingWhatsapp] = useState(false);
+  const [whatsappStatus, setWhatsappStatus] = useState<string>('');
   var data: any[] | React.SetStateAction<null> = [];
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -141,6 +143,68 @@ const UploadExcel: React.FC = () => {
     saveAs(zipBlob, 'MTC-VASAI-receipts-pdf' + '-' + new Date().getDate() + '-' + months[new Date().getMonth()] + '-' + new Date().getFullYear() + '.zip');
   };
 
+  const handleWhatsappPush = async () => {
+    setIsSendingWhatsapp(true);
+    setWhatsappStatus('Starting WhatsApp send process...');
+    
+    let successCount = 0;
+    let failCount = 0;
+
+    for (let i = 0; i < jsonData.length; i++) {
+      const element = document.getElementById(i + 'id');
+      const mobile = jsonData[i].Mobile;
+      
+      if (!mobile) {
+        console.warn('Skipping invoice without mobile:', jsonData[i]);
+        failCount++;
+        continue;
+      }
+
+      setWhatsappStatus(`Sending ${i + 1}/${jsonData.length} to ${mobile}...`);
+
+      if (element != null) {
+        try {
+          const canvas = await html2canvas(element, { scale: 2 });
+          const imgData = canvas.toDataURL('image/png');
+          const pdf = new jsPDF('p', 'mm', [element.offsetHeight * 0.2645833333, element.offsetWidth * 0.2645833333]);
+          const imgWidth = pdf.internal.pageSize.getWidth();
+          const imgHeight = (canvas.height * imgWidth) / canvas.width;
+          pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+          
+          const pdfBlob = pdf.output('blob');
+          
+          const formData = new FormData();
+          formData.append('pdf', pdfBlob, `receipt-${jsonData[i].Receipt}.pdf`);
+          formData.append('phoneNumber', mobile.toString());
+          formData.append('message', `Dear ${jsonData[i].Name},\n\nPlease find attached your receipt for your contribution of Rs. ${jsonData[i].Amount} towards ${jsonData[i].Heading}.\n\nThank you,\nMTC VASAI`);
+
+          const response = await fetch('/api/send-whatsapp', {
+            method: 'POST',
+            body: formData,
+          });
+
+          if (response.ok) {
+            successCount++;
+          } else {
+            const err = await response.json();
+            console.error('Failed to send to', mobile, err);
+            failCount++;
+            if (err.error?.includes('not ready') || err.error?.includes('fetch failed')) {
+              alert('WhatsApp service is not ready or not running. Please start the whatsapp-service locally and scan the QR code first.');
+              break;
+            }
+          }
+        } catch (error) {
+          console.error('Error generating/sending PDF for', mobile, error);
+          failCount++;
+        }
+      }
+    }
+    
+    setWhatsappStatus(`Finished! Success: ${successCount}, Failed: ${failCount}`);
+    setIsSendingWhatsapp(false);
+    setTimeout(() => setWhatsappStatus(''), 7000);
+  };
 
   // Generate zip folder once all PDFs are generated
   //};
@@ -178,12 +242,14 @@ const UploadExcel: React.FC = () => {
       >
         Download Image
       </button>
-      {/* <button
-        className="mb-10 ml-5 items-center rounded-lg bg-violet-600 p-3 px-4 text-sm font-medium text-white transition-colors hover:bg-violet-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600"
-        onClick={handleUploadPdf}
+      <button
+        className={`mb-10 ml-5 items-center rounded-lg p-3 px-4 text-sm font-medium text-white transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${isSendingWhatsapp ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-500 focus-visible:outline-green-600'}`}
+        onClick={handleWhatsappPush}
+        disabled={isSendingWhatsapp}
       >
-        Whatsapp Push
-      </button> */}
+        {isSendingWhatsapp ? 'Sending...' : 'Whatsapp Push'}
+      </button>
+      {whatsappStatus && <span className="ml-5 text-sm font-medium text-gray-700">{whatsappStatus}</span>}
       {jsonData && jsonData[0] && (
         <div>
           {/* <table>

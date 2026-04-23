@@ -4,8 +4,9 @@ export async function POST(req: NextRequest) {
   try {
     // Proxy the request directly using the raw body stream
     const contentType = req.headers.get('content-type');
+    const serviceUrl = process.env.WHATSAPP_SERVICE_URL || 'http://localhost:3001';
     
-    const response = await fetch('http://localhost:3001/api/send-pdf', {
+    const response = await fetch(`${serviceUrl}/api/send-pdf`, {
       method: 'POST',
       headers: contentType ? { 'Content-Type': contentType } : {},
       body: req.body,
